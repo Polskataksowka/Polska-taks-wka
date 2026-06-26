@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taxi Booking Pro Poland</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#f4f4f4}
+.container{width:95%;max-width:900px;margin:20px auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 0 10px rgba(0,0,0,.1)}
+input,button,textarea{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:6px}
+button{background:#ffc107;border:none;font-weight:bold;cursor:pointer}
+button:hover{background:#ffb300}
+.hidden{display:none}
+.logout{background:red;color:#fff}
+.taxi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;margin-top:15px}
+.taxi-card{border:1px solid #ddd;border-radius:10px;padding:10px;background:#fafafa}
+.taxi-card img{width:100%;height:180px;object-fit:cover;border-radius:8px}
+.booking-card{background:#fafafa;padding:10px;margin-top:10px;border-left:4px solid #ffc107}
+.selected{outline:3px solid #ffc107}
+</style>
+</head>
+<body>
+
+<div class="container" id="authSection">
+<h1>Taxi Booking Pro Poland</h1>
+
+<h2>Sign Up</h2>
+<input id="signupName" placeholder="Full Name">
+<input id="signupEmail" type="email" placeholder="Email">
+<input id="signupPassword" type="password" placeholder="Password">
+<button onclick="signup()">Create Account</button>
+
+<hr><br>
+
+<h2>Login</h2>
+<input id="loginEmail" type="email" placeholder="Email">
+<input id="loginPassword" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div>
+
+<div class="container hidden" id="dashboard">
+<h1>Book a Taxi</h1>
+<p id="welcome"></p>
+
+<input id="pickup" placeholder="Pickup Location">
+<input id="destination" placeholder="Destination">
+<input id="distance" type="number" placeholder="Distance (KM)">
+
+<button onclick="estimateFare()">Estimate Fare</button>
+<h3 id="fare"></h3>
+
+<h2>Choose Taxi</h2>
+
+<div class="taxi-grid">
+
+<div class="taxi-card" id="taxi1">
+<img src="https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=800&q=80">
+<h3>City Taxi</h3>
+<p>⭐⭐⭐⭐⭐ 4.9</p>
+<p>Driver: Piotr Kowalski</p>
+<p>Likes: <span id="l1">12</span></p>
+<button onclick="likeTaxi('l1')">👍 Like</button>
+<p>Clean taxi interior view.</p>
+<button onclick="selectTaxi('City Taxi','taxi1')">Select Taxi</button>
+</div>
+
+<div class="taxi-card" id="taxi2">
+<img src="https://images.unsplash.com/photo-1489824904134-891ab64532f1?auto=format&fit=crop&w=800&q=80">
+<h3>Family Taxi</h3>
+<p>⭐⭐⭐⭐⭐ 4.8</p>
+<p>Driver: Marek Nowak</p>
+<p>Likes: <span id="l2">8</span></p>
+<button onclick="likeTaxi('l2')">👍 Like</button>
+<p>Comfortable passenger seating.</p>
+<button onclick="selectTaxi('Family Taxi','taxi2')">Select Taxi</button>
+</div>
+
+<div class="taxi-card" id="taxi3">
+<img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80">
+<h3>Standard Taxi</h3>
+<p>⭐⭐⭐⭐ 4.3</p>
+<p>Driver: Tomasz Wiśniewski</p>
+<p>Likes: <span id="l3">5</span></p>
+<button onclick="likeTaxi('l3')">👍 Like</button>
+<p>Neat interior for everyday rides.</p>
+<button onclick="selectTaxi('Standard Taxi','taxi3')">Select Taxi</button>
+</div>
+
+</div>
+
+<button onclick="bookTaxi()">Book Taxi</button>
+<button class="logout" onclick="logout()">Logout</button>
+
+<h2>Booking History</h2>
+<div id="history"></div>
+</div>
+
+<script>
+let currentUser=null;
+let selectedTaxi="";
+
+function signup(){
+const name=signupName.value;
+const email=signupEmail.value;
+const password=signupPassword.value;
+if(!name||!email||!password){alert("Fill all fields");return;}
+let users=JSON.parse(localStorage.getItem("users"))||[];
+if(users.find(u=>u.email===email)){alert("Account already exists");return;}
+users.push({name,email,password});
+localStorage.setItem("users",JSON.stringify(users));
+alert("Account created successfully");
+}
+
+function login(){
+let users=JSON.parse(localStorage.getItem("users"))||[];
+let user=users.find(u=>u.email===loginEmail.value&&u.password===loginPassword.value);
+if(!user){alert("Invalid login");return;}
+currentUser=user;
+authSection.classList.add("hidden");
+dashboard.classList.remove("hidden");
+welcome.innerHTML="Welcome <b>"+user.name+"</b>";
+loadHistory();
+}
+
+function estimateFare(){
+let km=parseFloat(distance.value);
+if(!km){alert("Enter distance");return;}
+fare.innerHTML="Estimated Fare: "+((km*4)+10).toFixed(2)+" PLN";
+}
+
+function selectTaxi(name,id){
+selectedTaxi=name;
+document.querySelectorAll(".taxi-card").forEach(x=>x.classList.remove("selected"));
+document.getElementById(id).classList.add("selected");
+}
+
+function likeTaxi(id){
+let el=document.getElementById(id);
+el.textContent=parseInt(el.textContent)+1;
+}
+
+function bookTaxi(){
+if(!selectedTaxi){alert("Select a taxi");return;}
+if(!pickup.value||!destination.value||!distance.value){alert("Fill all fields");return;}
+let booking={taxi:selectedTaxi,pickup:pickup.value,destination:destination.value,distance:distance.value,date:new Date().toLocaleString()};
+let history=JSON.parse(localStorage.getItem(currentUser.email))||[];
+history.push(booking);
+localStorage.setItem(currentUser.email,JSON.stringify(history));
+alert("Taxi booked successfully!");
+loadHistory();
+}
+
+function loadHistory(){
+let history=JSON.parse(localStorage.getItem(currentUser.email))||[];
+let html="";
+history.forEach(item=>{
+html+=`<div class="booking-card"><b>Taxi:</b> ${item.taxi}<br><b>Pickup:</b> ${item.pickup}<br><b>Destination:</b> ${item.destination}<br><b>Distance:</b> ${item.distance} KM<br><b>Date:</b> ${item.date}</div>`;
+});
+document.getElementById("history").innerHTML=html;
+}
+
+function logout(){
+currentUser=null;
+dashboard.classList.add("hidden");
+authSection.classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
